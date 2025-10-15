@@ -57,10 +57,10 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 }
 
 func NexDateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "ошибка: метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
+	// if r.Method != http.MethodPost {
+	// 	http.Error(w, "ошибка: метод не поддерживается", http.StatusMethodNotAllowed)
+	// 	return
+	// }
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -79,7 +79,7 @@ func NexDateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write([]byte(nexDate))
 }
 

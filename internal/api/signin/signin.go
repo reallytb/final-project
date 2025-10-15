@@ -25,6 +25,7 @@ type tokenJson struct {
 }
 
 func SigninHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	var pass password
 	err := json.NewDecoder(r.Body).Decode(&pass)
 	if err != nil {
@@ -71,6 +72,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		if len(pass) > 0 {
 			var jwtString string
 			cookie, err := r.Cookie("token")
+			// fmt.Println(cookie)
 			if err == nil {
 				jwtString = cookie.Value
 			}
@@ -82,19 +84,19 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			})
 
 			if err != nil || !token.Valid {
-				http.Error(w, "ошибка: неверный токен", http.StatusUnauthorized)
+				task.SendJSONError(w, "ошибка: неверный токен", http.StatusUnauthorized)
 				return
 			}
 
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				if exp, ok := claims["exp"].(float64); ok {
 					if time.Now().Unix() > int64(exp) {
-						http.Error(w, "Token expired", http.StatusUnauthorized)
+						task.SendJSONError(w, "Token expired", http.StatusUnauthorized)
 						return
 					}
 				}
 				if authorized, ok := claims["authorized"].(bool); !ok || !authorized {
-					http.Error(w, "Not authorized", http.StatusUnauthorized)
+					task.SendJSONError(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
 			}

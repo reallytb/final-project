@@ -20,7 +20,7 @@ func editTask(w http.ResponseWriter, r *http.Request) (int, error) {
 	if !nextdate.CheckRepeat(task.Repeat) {
 		return http.StatusBadRequest, errors.New("ошибка: неверный формат правила повторения")
 	}
-	if len(task.Title) == 0 {
+	if len(task.ID) == 0 {
 		return http.StatusBadRequest, errors.New("ошибка: id не может быть пустым")
 	}
 	if len(task.Title) == 0 {
@@ -30,6 +30,9 @@ func editTask(w http.ResponseWriter, r *http.Request) (int, error) {
 	if err != nil {
 		return http.StatusBadRequest, errors.New("ошибка: неверный формат даты")
 	}
-	scheduler.EditTask(task)
+	err = scheduler.EditTask(task)
+	if err != nil {
+		return http.StatusBadRequest, errors.New("ошибка: неверный формат даты")
+	}
 	return http.StatusOK, nil
 }

@@ -108,7 +108,7 @@ func GetTasks(limit string) ([]Task, error) {
 		tasks = append(tasks, task)
 	}
 	if tasks == nil {
-		return []Task{}, errors.New("ошибка: не найдено задач")
+		return []Task{}, nil
 	}
 	return tasks, nil
 }

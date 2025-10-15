@@ -23,5 +23,8 @@ func getTask(id string) (scheduler.Task, int, error) {
 		return scheduler.Task{}, http.StatusBadRequest, errors.New("ошибка: требуется указать ID")
 	}
 	task, err := scheduler.GetTask(id)
-	return task, http.StatusOK, err
+	if err != nil {
+		return scheduler.Task{}, http.StatusBadRequest, err
+	}
+	return task, http.StatusOK, nil
 }
