@@ -1,12 +1,13 @@
 package server
 
 import (
-	"final-project/internal/api/nextdate"
-	"final-project/internal/api/signin"
-	"final-project/internal/api/task"
 	"log"
 	"net/http"
 	"time"
+
+	"final-project/internal/api/nextdate"
+	"final-project/internal/api/signin"
+	"final-project/internal/api/task"
 )
 
 type Server struct {

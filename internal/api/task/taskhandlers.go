@@ -3,12 +3,13 @@ package task
 import (
 	"database/sql"
 	"encoding/json"
-	"final-project/internal/api/nextdate"
-	"final-project/internal/scheduler"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"final-project/internal/api/nextdate"
+	"final-project/internal/scheduler"
 )
 
 type ErrorResponse struct {
@@ -59,15 +60,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			SendJSONError(w, "ошибка: не указан id", http.StatusInternalServerError)
 			return
 		}
-		db, err := sql.Open("sqlite", "scheduler.db")
-		if err != nil {
-			log.Println(err)
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			SendJSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-		res, err := db.Exec("DELETE FROM scheduler where id = :id", sql.Named("id", id))
+		res, err := scheduler.DB.Exec("DELETE FROM scheduler where id = :id", sql.Named("id", id))
 		if err != nil {
 			log.Println(err)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -100,23 +93,18 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(map[string]interface{}{})
+	default:
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		SendJSONError(w, "ошибка: метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
 
 func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := r.FormValue("id")
-	db, err := sql.Open("sqlite", "scheduler.db")
-	if err != nil {
-		log.Println(err)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		SendJSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-	row := db.QueryRow("SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
+	row := scheduler.DB.QueryRow("SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
 	var task scheduler.Task
-	err = row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println("ошибка: задача не найдена")
@@ -136,7 +124,7 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(task.Repeat) == 0 {
-		_, err := db.Exec("DELETE FROM scheduler where id = :id", sql.Named("id", id))
+		_, err := scheduler.DB.Exec("DELETE FROM scheduler where id = :id", sql.Named("id", id))
 		if err != nil {
 			log.Println(err)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -154,7 +142,7 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 			SendJSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		res, err := db.Exec("UPDATE scheduler SET date = :date where id = :id", sql.Named("date", nextDate), sql.Named("id", id))
+		res, err := scheduler.DB.Exec("UPDATE scheduler SET date = :date where id = :id", sql.Named("date", nextDate), sql.Named("id", id))
 		if err != nil {
 			log.Println(err)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -181,7 +169,7 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, statusCode, err := getTasks(50)
+	tasks, statusCode, err := getTasks()
 	if err != nil {
 		log.Println(err)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")

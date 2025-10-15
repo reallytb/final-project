@@ -2,7 +2,6 @@ package signin
 
 import (
 	"encoding/json"
-	"final-project/internal/api/task"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,7 +9,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"final-project/internal/api/task"
 )
+
+var pass = os.Getenv("TODO_PASSWORD")
+var pasEnv = os.Getenv("TODO_PASSWORD")
 
 type password struct {
 	Password string `json:"password"`
@@ -30,7 +34,6 @@ func SigninHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body.Close()
-	pasEnv := os.Getenv("TODO_PASSWORD")
 	if pass.Password != pasEnv {
 		log.Println("введён неверный пароль")
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -65,7 +68,6 @@ func SigninHandler(w http.ResponseWriter, r *http.Request) {
 
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pass := os.Getenv("TODO_PASSWORD")
 		if len(pass) > 0 {
 			var jwtString string
 			cookie, err := r.Cookie("token")

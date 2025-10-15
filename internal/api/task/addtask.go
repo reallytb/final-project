@@ -1,13 +1,13 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
-	"final-project/internal/api/nextdate"
-	"final-project/internal/scheduler"
 	"net/http"
 	"time"
+
+	"final-project/internal/api/nextdate"
+	"final-project/internal/scheduler"
 )
 
 func addTask(w http.ResponseWriter, r *http.Request) (int64, int, error) {
@@ -22,19 +22,19 @@ func addTask(w http.ResponseWriter, r *http.Request) (int64, int, error) {
 		return 0, http.StatusBadRequest, err
 	}
 	if task.Date == "" {
-		task.Date = time.Now().Format("20060102")
+		task.Date = time.Now().Format(nextdate.DateFormat)
 	}
 	if !nextdate.CheckRepeat(task.Repeat) {
 		return 0, http.StatusBadRequest, errors.New("ошибка: неверный формат правила повторения")
 	}
-	t, err := time.Parse("20060102", task.Date)
+	t, err := time.Parse(nextdate.DateFormat, task.Date)
 	if err != nil {
 		return 0, http.StatusInternalServerError, err
 	}
 	now := time.Now()
 	if nextdate.AfterNow(t, now) {
 		if len(task.Repeat) == 0 {
-			task.Date = now.Format("20060102")
+			task.Date = now.Format(nextdate.DateFormat)
 		} else {
 			next, err := nextdate.NextDate(now, task.Date, task.Repeat)
 			if err != nil {
@@ -44,22 +44,9 @@ func addTask(w http.ResponseWriter, r *http.Request) (int64, int, error) {
 		}
 
 	} else {
-		task.Date = now.Format("20060102")
+		task.Date = now.Format(nextdate.DateFormat)
 	}
-	db, err := sql.Open("sqlite", "scheduler.db")
-	if err != nil {
-		return 0, http.StatusInternalServerError, err
-	}
-	defer db.Close()
-	res, err := db.Exec("insert into scheduler (date, title, comment, repeat) values (:date, :title, :comment, :repeat)",
-		sql.Named("date", task.Date),
-		sql.Named("title", task.Title),
-		sql.Named("comment", task.Comment),
-		sql.Named("repeat", task.Repeat))
-	if err != nil {
-		return 0, http.StatusInternalServerError, err
-	}
-	id, err := res.LastInsertId()
+	id, err := scheduler.AddTask(task)
 	if err != nil {
 		return 0, http.StatusInternalServerError, err
 	}

@@ -8,12 +8,14 @@ import (
 	"time"
 )
 
+const DateFormat string = "20060102"
+
 func AfterNow(date, now time.Time) bool {
 	return date.After(now)
 }
 
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
-	date, err := time.Parse("20060102", dstart)
+	date, err := time.Parse(DateFormat, dstart)
 	if err != nil {
 		return "", err
 	}
@@ -27,7 +29,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 				break
 			}
 		}
-		dateString := date.Format("20060102")
+		dateString := date.Format(DateFormat)
 		return dateString, nil
 	} else if strings.Contains(repeat, "d") && strings.Contains(repeat, " ") {
 		rule := strings.Split(repeat, " ")
@@ -48,13 +50,17 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 				break
 			}
 		}
-		dateString := date.Format("20060102")
+		dateString := date.Format(DateFormat)
 		return dateString, nil
 	}
 	return "", err
 }
 
 func NexDateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "ошибка: метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +68,7 @@ func NexDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowString := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
-	now, err := time.Parse("20060102", nowString)
+	now, err := time.Parse(DateFormat, nowString)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
